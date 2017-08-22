@@ -22,9 +22,9 @@ from DataUtil import batch_iter
 #configuration
 tf.flags.DEFINE_float("learning_rate",0.01,"learning rate")
 
-tf.flags.DEFINE_integer("num_epochs",50,"embedding size")
-tf.flags.DEFINE_integer("batch_size", 64, "Batch size for training/evaluating.") #批处理的大小 32-->128
-tf.flags.DEFINE_integer("validate_every", 10, "Validate every validate_every epochs.") #每10轮做一次验证
+tf.flags.DEFINE_integer("num_epochs",60,"embedding size")
+tf.flags.DEFINE_integer("batch_size", 64, "Batch size for training/evaluating.") 
+tf.flags.DEFINE_integer("validate_every", 5, "Validate every validate_every epochs.") 
 
 tf.flags.DEFINE_integer("decay_steps", 12000, "how many steps before decay learning rate.")
 tf.flags.DEFINE_float("decay_rate", 0.9, "Rate of decay for learning rate.") #0.5一次衰减多少
@@ -140,24 +140,20 @@ with tf.Graph().as_default():
 			print "dev_result: {}:step {}, loss {:g}, acc {:g}".format(time_str,step,loss,accuracy)
 
 		
-		batches = batch_iter(list(zip(x_train,y_train)),FLAGS.batch_size, FLAGS.num_epochs) 
-			
-		for batch in batches:
-			x_batch,y_batch = zip(*batch)
-			
-			#print len(x_batch),len(x_batch[0])
-			#print len(y_batch),len(y_batch[0])
-	
-			train_step(x_batch,y_batch)
+		for epoch_idx in range(FLAGS.num_epochs):
+			batches = batch_iter(list(zip(x_train,y_train)),FLAGS.batch_size) 
+				
+			for batch in batches:
+				x_batch,y_batch = zip(*batch)
+				
+				train_step(x_batch,y_batch)
 
-			current_step = tf.train.global_step(sess,rnn.global_step)
+				if epoch_idx % FLAGS.validate_every == 0:
+					print '\n'
+					dev_step(x_dev,y_dev)
 
-			if current_step % FLAGS.validate_every == 0:
-				print '\n'
-				dev_step(x_dev,y_dev)
-
-			path = saver.save(sess,checkpoints_prefix,global_step=current_step)
-			print("Saved model checkpoint to {}\n".format(path))
+				path = saver.save(sess,checkpoints_prefix,global_step=epoch_idx)
+				print("Saved model checkpoint to {}\n".format(path))
 
 
 
