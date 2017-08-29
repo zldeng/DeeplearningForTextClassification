@@ -44,6 +44,8 @@ tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (defau
 
 tf.flags.DEFINE_float("l2_reg_lambda", 0.0001, "L2 regularization lambda (default: 0.0)")
 
+tf.flags.DEFINE_float('grad_clip',5.0,'grad_clip')
+
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 
@@ -104,15 +106,9 @@ with tf.Graph().as_default():
 			embed_size = FLAGS.embed_size,
 			hidden_size = FLAGS.hidden_size,
 			is_training = True,
-			l2_lambda = FLAGS.l2_reg_lambda)
+			l2_lambda = FLAGS.l2_reg_lambda,
+			grad_clip = FLAGS.grad_clip)
 
-
-		#global_step = tf.Variable(0,name = 'global_step',trainable = False)
-
-		#optimizer = tf.train.AdamOptimizer(1e-3)
-
-		#grads_and_vars = optimizer.compute_gradients(rnn.loss)
-		#train_op = optimizer.apply_gradients(grads_and_vars,global_step = global_step)
 
 		saver = tf.train.Saver(tf.global_variables(),max_to_keep = FLAGS.num_checkpoints)
 		

@@ -17,7 +17,8 @@ from DeepLearningBaseModel import BaseModel
 class TextRNN(BaseModel):
 	def __init__(self,num_classes,learning_rate,decay_steps,decay_rate,\
 			sequence_length,vocab_size,embed_size,hidden_size,is_training,\
-			l2_lambda,initializer = tf.random_normal_initializer(stddev=0.1)):
+			l2_lambda,grad_clip,
+			initializer = tf.random_normal_initializer(stddev=0.1)):
 
 		self.num_classes = num_classes
 		self.learning_rate = learning_rate
@@ -29,6 +30,7 @@ class TextRNN(BaseModel):
 		self.hidden_size = hidden_size
 		self.is_training = is_training
 		self.l2_lambda = l2_lambda
+		self.grad_clip = grad_clip
 		self.initializer = initializer
 			
 
@@ -105,7 +107,8 @@ class TextRNN(BaseModel):
 		
 		#concat output
 		#each output in outputs is [batch sequence_length hidden_size]
-
+		
+		#concat forward output and backward output
 		output_cnn = tf.concat(outputs,axis = 2) #[batch sequence_length 2*hidden_size]
 		
 		output_cnn_last = tf.reduce_mean(output_cnn,axis = 1) #[batch_size,2*hidden_size]
@@ -135,17 +138,21 @@ class TextRNN(BaseModel):
 		learning_rate = tf.train.exponential_decay(self.learning_rate,self.global_step,
 			self.decay_steps,self.decay_rate,staircase = True)
 
-		train_op = tf.contrib.layers.optimize_loss(self.loss_val,global_step = self.global_step,
-			learning_rate = learning_rate,optimizer = 'Adam')
+		#train_op = tf.contrib.layers.optimize_loss(self.loss_val,global_step = self.global_step,
+		#	learning_rate = learning_rate,optimizer = 'Adam')
+		
+		#use grad_clip to hand exploding or vanishing gradients
+		optimizer = tf.train.AdamOptimizer(learning_rate)
+		grads_and_vars = optimizer.compute_gradients(self.loss_val)
+
+		for idx ,(grad,var) in enumerate(grads_and_vars):
+			if grad is not None:
+				grads_and_vars[idx] = (tf.clip_by_norm(grad,self.grad_clip),var)
+
+		train_op = optimizer.apply_gradients(grads_and_vars, global_step = self.global_step)
 			
 
 		return train_op
-
-	
-
-
-
-
 
 
 #test started
