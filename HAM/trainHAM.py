@@ -20,16 +20,16 @@ from HAMDataUtil import loadDataFromTrainFile
 
 #configuration
 tf.flags.DEFINE_float("learning_rate",0.01,"learning rate")
-tf.flags.DEFINE_integer("num_epochs",60,"embedding size")
+tf.flags.DEFINE_integer("num_epochs",30,"embedding size")
 tf.flags.DEFINE_integer("batch_size", 100, "Batch size for training/evaluating.") #批处理的大小 32-->128
 
 tf.flags.DEFINE_integer("decay_steps", 12000, "how many steps before decay learning rate.")
 tf.flags.DEFINE_float("decay_rate", 0.9, "Rate of decay for learning rate.") #0.5一次衰减多少
 
-tf.flags.DEFINE_string("ckpt_dir","text_hkm_checkpoint/","checkpoint location for the model")
-tf.flags.DEFINE_integer('num_checkpoints',10,'save checkpoints count')
+tf.flags.DEFINE_string("ckpt_dir","text_ham_checkpoint/","checkpoint location for the model")
+tf.flags.DEFINE_integer('num_checkpoints',20,'save checkpoints count')
 
-tf.flags.DEFINE_integer('max_sentence_num',50,'max sentence num in a doc')
+tf.flags.DEFINE_integer('max_sentence_num',30,'max sentence num in a doc')
 tf.flags.DEFINE_integer('max_sentence_length',30,'max word count in a sentence')
 tf.flags.DEFINE_integer("embedding_size",128,"embedding size")
 tf.flags.DEFINE_integer('hidden_size',128,'cell output size')
@@ -38,8 +38,6 @@ tf.flags.DEFINE_boolean("is_training",True,"is traning.true:tranining,false:test
 
 tf.flags.DEFINE_integer("validate_every", 1, "Validate every validate_every epochs.") #每10轮做一次验证
 tf.flags.DEFINE_float('validation_percentage',0.1,'validat data percentage in train data')
-tf.flags.DEFINE_integer('dev_sample_max_cnt',1000,\
-	'max cnt of validation samples, dev samples cnt too large will case high loader')
 
 tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")
 
@@ -56,14 +54,12 @@ tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on 
 #	"path of traning data.")
 
 tf.flags.DEFINE_string("train_file",\
-	"/home/dengzhilong/work/call_reason/data/all_data_ham/tmp.train",\
+	"/home/dengzhilong/tensorflow/data/ham_data/all_train.data.tag1.ham",\
 	"path of traning data.")
 
 tf.flags.DEFINE_string('tag2id_file',\
-	'/home/dengzhilong/tensorflow/cnn_text_classicication_tf/cnn-text-classification-tf/tag_level_1.data',\
+	'/home/dengzhilong/tensorflow/data/ham_data/tag_level_1.data',\
 	'label tag2id file')
-
-tf.flags.DEFINE_string('tag_level','1','label tag level')
 
 FLAGS=tf.flags.FLAGS
 FLAGS._parse_flags()
@@ -79,13 +75,22 @@ vocab_processor,train_data,dev_data,num_classes,\
 	final_max_sentence_length,final_max_sentence_num \
 		= loadDataFromTrainFile(FLAGS.train_file,\
 			FLAGS.max_sentence_num,FLAGS.max_sentence_length,\
-			FLAGS.tag2id_file,FLAGS.validation_percentage,\
-			FLAGS.dev_sample_max_cnt)
+			FLAGS.tag2id_file,FLAGS.validation_percentage)
 
+vocab_size = len(vocab_processor.vocabulary_)
+
+print 'vocab_size: ' + str(vocab_size)
 print 'Load train data done!'
+
 
 x_train,y_train = train_data[0],train_data[1]
 x_dev,y_dev = dev_data[0],dev_data[1]
+
+
+print 'train_data:',np.shape(x_train),np.shape(y_train)
+print 'dev_data:',np.shape(x_dev),np.shape(y_dev)
+
+sys.stdout.flush()
 
 with tf.Graph().as_default():
 	sess_conf = tf.ConfigProto(
@@ -109,8 +114,7 @@ with tf.Graph().as_default():
 
 		vocab_processor.save(os.path.join(out_dir,'vocab'))
 	
-
-		ham = HAM(len(vocab_processor.vocabulary_),\
+		ham = HAM(vocab_size,\
 			final_max_sentence_num,final_max_sentence_length,\
 			num_classes,FLAGS.embedding_size,FLAGS.hidden_size,\
 			FLAGS.learning_rate,FLAGS.decay_rate,FLAGS.decay_steps,\

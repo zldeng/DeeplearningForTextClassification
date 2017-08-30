@@ -13,7 +13,7 @@ from tensorflow.contrib import learn
 
 
 def loadDataFromTrainFile(train_file,max_sentence_num,max_sentence_length,\
-	tag2id_file,dev_percentage,max_dev_sampe_cnt):
+	tag2id_file,dev_percentage):
 	'''
 	load train data and then:
 	 1. convert train data to matrix [doc_size,max_sentence_num,max_sentence_length]
@@ -141,7 +141,7 @@ def loadDataFromTrainFile(train_file,max_sentence_num,max_sentence_length,\
 	x_shuffled = x[shuffle_indices]
 	y_shuffled = y[shuffle_indices]
 
-	dev_sample_index = max(-1 * int(len(y_shuffled) * dev_percentage),-1*max_dev_sampe_cnt)
+	dev_sample_index = -1 * int(len(y_shuffled) * dev_percentage)
 	
 	#x is [doc_size,max_sentence_num,max_sentence_length]
 	#y is [doc_size,num_classes]
