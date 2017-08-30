@@ -77,7 +77,7 @@ class HAM(object):
 		
 
 	def word2vec(self):
-		with tf.name_scope('embedding'):
+		with tf.device('/cpu:0'),tf.name_scope('embedding'):
 			self.embedding_mat = tf.Variable(tf.truncated_normal((self.vocab_size,self.embedding_size)),name = 'embedding_mat')
 
 			#[batch,sentence_in_doc,word_in_sentence,embedding_size]
