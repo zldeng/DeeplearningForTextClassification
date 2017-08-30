@@ -33,7 +33,7 @@ tf.flags.DEFINE_string("ckpt_dir","text_cnn_checkpoint/","checkpoint location fo
 tf.flags.DEFINE_integer('num_checkpoints',10,'save checkpoints count')
 
 tf.flags.DEFINE_integer("embed_size",128,"embedding size")
-tf.flags.DEFINE_string("filter_sizes", "1,2,3,4,5", "Comma-separated filter sizes (default: '3,4,5')")
+tf.flags.DEFINE_string("filter_sizes", "3,4,5", "Comma-separated filter sizes (default: '3,4,5')")
 tf.flags.DEFINE_integer("num_filters", 128, "Number of filters per filter size (default: 128)")
 
 tf.flags.DEFINE_boolean("is_training",True,"is traning.true:tranining,false:testing/inference")
@@ -49,10 +49,10 @@ tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device 
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 
 
-tf.flags.DEFINE_string("train_data","/home/dengzhilong/work/call_reason/data/all_data/all_hn_train_0817.sk",
+tf.flags.DEFINE_string("train_data","/home/dengzhilong/tensorflow/code/data/all_hn_train_0817.sk",
 	"path of traning data.")
 
-tf.flags.DEFINE_string('tag2id_file','/home/dengzhilong/tensorflow/cnn_text_classicication_tf/cnn-text-classification-tf/tag_level_1.data','label tag2id file')
+tf.flags.DEFINE_string('tag2id_file','/home/dengzhilong/tensorflow/code/data/tag_level_1.data','label tag2id file')
 tf.flags.DEFINE_string('tag_level','1','label tag level')
 
 FLAGS=tf.flags.FLAGS
