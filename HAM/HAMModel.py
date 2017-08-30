@@ -56,7 +56,7 @@ class HAM(object):
 
 		#placeholder
 		#shape[batch,max_sentence_num,max_sentence_length]
-		self.input_x = tf.placeholder(tf.int32,[None,None,None],name = 'input_x')
+		self.input_x = tf.placeholder(tf.int32,[None,max_sentence_num,max_sentence_length],name = 'input_x')
 		self.input_y = tf.placeholder(tf.int32,[None,num_classes],name = 'input_y')
 		self.dropout_keep_prob = tf.placeholder(tf.float32,name = 'dropout_keep_prob')
 		
@@ -72,7 +72,9 @@ class HAM(object):
 		self.loss_val = self.loss()
 
 		self.train_op = self.train()
-
+		
+		self.predictions = tf.argmax(self.logits,axis = 1,name = 'predictions')
+	
 		self.accuracy = self.accuracy(self.logits,self.input_y)
 		
 

@@ -119,12 +119,9 @@ def loadDataFromTrainFile(train_file,max_sentence_num,max_sentence_length,\
 		
 		#print np.shape(cand_data_mat),sent_cnt
 		if sent_cnt < final_max_sentence_num:
-			
-			null_list = []
-			for i in range(final_max_sentence_num - sent_cnt):
-				null_list.append([0]*final_max_sentence_length)
-
+			null_list = [[0] * final_max_sentence_length]* (final_max_sentence_num - sent_cnt)
 			null_arr = np.array(null_list)
+			
 			#print 'null: ',np.shape(null_arr)
 			cand_data_mat = np.concatenate((cand_data_mat,null_arr),axis = 0)
 			
@@ -151,5 +148,40 @@ def loadDataFromTrainFile(train_file,max_sentence_num,max_sentence_length,\
 
 	return vocab_processor,(x_train,y_train),(x_dev,y_dev),num_classes,\
 		final_max_sentence_length,final_max_sentence_num
+
+
+
+def loadTestDataAndConvertItToTensor(test_ham_file,tag2id_file,\
+	vocab_file,max_sentence_num,max_sentence_length):
+	'''
+	load测试数据，并完成词典映射以及句子数、句子长度的补齐和截断工作
+	'''
+	tag2id = {}
+
+	for line in file(tag2id_file):
+		line = line.strip()
+
+		if '' == line:
+			continue
+		print 'tag: ' + line
+		tag2id[line] = len(tag2id)
+	
+	num_classes = len(tag2id)
+
+	if num_classes < 2:
+		print 'Error_tag_cnt: ' + str(num_classes)
+		sys.exit(1)
+
+	data_x = []
+	gold_label = []
+	
+	line_num = 0
+	for line in file(test_ham_file):
+		line_list = line.strip().split('\t')
+
+		if 4 != len(line_list):
+			print 'Err: ' + str(line_num)
+			continue
+	vocab_processor = learn.preprocessing.VocabularyProcessor.restore(vocab_path)
 
 
