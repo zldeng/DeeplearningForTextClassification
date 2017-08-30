@@ -49,10 +49,14 @@ tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device 
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 
 
-#tf.flags.DEFINE_string("train_data",\
-#	"/home/dengzhilong/work/call_reason/data/all_data/all_hn_train_0817.sk",\
-#	"path of traning data.")
+tf.flags.DEFINE_string("train_file",\
+	"/home/dengzhilong/work/call_reason/data/all_data_ham/all_train.data.tag1.ham",\
+	"path of traning data.")
 
+tf.flags.DEFINE_string('tag2id_file',\
+	'/home/dengzhilong/work/call_reason/data/all_data_ham/tag_level_1.data',\
+	'label tag2id file')
+'''
 tf.flags.DEFINE_string("train_file",\
 	"/home/dengzhilong/tensorflow/data/ham_data/all_train.data.tag1.ham",\
 	"path of traning data.")
@@ -60,6 +64,7 @@ tf.flags.DEFINE_string("train_file",\
 tf.flags.DEFINE_string('tag2id_file',\
 	'/home/dengzhilong/tensorflow/data/ham_data/tag_level_1.data',\
 	'label tag2id file')
+'''
 
 FLAGS=tf.flags.FLAGS
 FLAGS._parse_flags()
@@ -71,9 +76,7 @@ for attr,value in sorted(FLAGS.__flags.items()):
 sys.stderr.write('begin train....\n')
 sys.stderr.write('begin load train data and create vocabulary...\n')
 
-vocab_processor,train_data,dev_data,num_classes,\
-	final_max_sentence_length,final_max_sentence_num \
-		= loadDataFromTrainFile(FLAGS.train_file,\
+vocab_processor,train_data,dev_data,num_classes = loadDataFromTrainFile(FLAGS.train_file,\
 			FLAGS.max_sentence_num,FLAGS.max_sentence_length,\
 			FLAGS.tag2id_file,FLAGS.validation_percentage)
 
@@ -114,8 +117,7 @@ with tf.Graph().as_default():
 
 		vocab_processor.save(os.path.join(out_dir,'vocab'))
 	
-		ham = HAM(vocab_size,\
-			final_max_sentence_num,final_max_sentence_length,\
+		ham = HAM(vocab_size,FLAGS.max_sentence_num,FLAGS.max_sentence_length,\
 			num_classes,FLAGS.embedding_size,FLAGS.hidden_size,\
 			FLAGS.learning_rate,FLAGS.decay_rate,FLAGS.decay_steps,\
 			FLAGS.l2_reg_lambda,FLAGS.grad_clip,True)

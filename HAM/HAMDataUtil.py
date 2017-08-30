@@ -47,8 +47,6 @@ def loadDataFromTrainFile(train_file,max_sentence_num,max_sentence_length,\
 	gold_label_list = []
 	sentence_cnt = 0
 
-	real_max_sentence_num = 0
-	real_max_sentence_length = 0
 	for line in file(train_file):
 		line_list = line.strip().split('\t')
 		line_num += 1
@@ -76,20 +74,13 @@ def loadDataFromTrainFile(train_file,max_sentence_num,max_sentence_length,\
 		if len(sent_list) > max_sentence_num:
 			sent_list = sent_list[:max_sentence_num]
 		
-		if len(sent_list) > real_max_sentence_num:
-			real_max_sentence_num = len(sent_list)
-
 		try:
-			doc_beg_idx = sentence_cnt
+			doc_beg_idx = len(train_data)
 
 			for word_list in sent_list:
-				if len(word_list.strip().split(' ')) > real_max_sentence_length:
-					real_max_sentence_length = len(word_list.strip().split(' '))
-
 				train_data.append(word_list)
-				sentence_cnt += 1
 
-			doc_end_idx = sentence_cnt
+			doc_end_idx = len(train_data)
 			
 			#print doc_beg_idx,doc_end_idx
 			doc_sentence_idx.append((doc_beg_idx,doc_end_idx))
@@ -103,11 +94,7 @@ def loadDataFromTrainFile(train_file,max_sentence_num,max_sentence_length,\
 			print 'Err ' + str(line_num) + ' ' + str(e)
 			sys.exit(1)
 	
-	final_max_sentence_length = min(real_max_sentence_length,max_sentence_length)
-	final_max_sentence_num = min(real_max_sentence_num,max_sentence_num)
-	
-	print 'final_max: ', final_max_sentence_num,final_max_sentence_length
-	vocab_processor = learn.preprocessing.VocabularyProcessor(final_max_sentence_length)
+	vocab_processor = learn.preprocessing.VocabularyProcessor(max_sentence_length)
 
 	train_word_idx_mat = np.array(list(vocab_processor.fit_transform(train_data)))
 
@@ -117,9 +104,9 @@ def loadDataFromTrainFile(train_file,max_sentence_num,max_sentence_length,\
 
 		cand_data_mat = train_word_idx_mat[beg_idx:end_idx]
 		
-		#print np.shape(cand_data_mat),sent_cnt
-		if sent_cnt < final_max_sentence_num:
-			null_list = [[0] * final_max_sentence_length]* (final_max_sentence_num - sent_cnt)
+		#sentences in doc is smaller than max_sentence_num. use 0 sentence to padding
+		if sent_cnt < max_sentence_num:
+			null_list = [[0] * max_sentence_length] * (max_sentence_num - sent_cnt)		
 			null_arr = np.array(null_list)
 			
 			#print 'null: ',np.shape(null_arr)
@@ -146,10 +133,7 @@ def loadDataFromTrainFile(train_file,max_sentence_num,max_sentence_length,\
 	y_train,y_dev = y[:dev_sample_index],y[dev_sample_index:]
 
 
-	return vocab_processor,(x_train,y_train),(x_dev,y_dev),num_classes,\
-		final_max_sentence_length,final_max_sentence_num
-
-
+	return vocab_processor,(x_train,y_train),(x_dev,y_dev),num_classes
 
 def loadTestDataAndConvertItToTensor(test_ham_file,tag2id_file,\
 	vocab_file,max_sentence_num,max_sentence_length):
@@ -167,21 +151,90 @@ def loadTestDataAndConvertItToTensor(test_ham_file,tag2id_file,\
 		tag2id[line] = len(tag2id)
 	
 	num_classes = len(tag2id)
+	
+	vocab_processor = learn.preprocessing.VocabularyProcessor.restore(vocab_file)
 
-	if num_classes < 2:
-		print 'Error_tag_cnt: ' + str(num_classes)
-		sys.exit(1)
-
-	data_x = []
-	gold_label = []
+	doc_data_list = []
+	doc_sentence_idx_list = []
+	gold_label_list = []
 	
 	line_num = 0
+	
 	for line in file(test_ham_file):
 		line_list = line.strip().split('\t')
 
 		if 4 != len(line_list):
-			print 'Err: ' + str(line_num)
+			print 'Err: ',line_num
 			continue
-	vocab_processor = learn.preprocessing.VocabularyProcessor.restore(vocab_path)
+
+		try:
+			gold_label = line_list[2]
+			data_list = json.loads(line_list[3])
+			
+			if gold_label not in tag2id:
+				print 'Err_tag: ' + gold_label
+				continue
+			
+			tag_idx = tag2id[gold_label]
+
+			if not isinstance(data_list,list) or len(data_list) == 0:
+				print 'Err_type:' + str(line_num)
+				continue
+
+		except Exception,e:
+			print 'Err: ' + str(line_num) + '\t' + str(e)
+			continue
+
+		doc_beg_idx = len(doc_data_list)
+
+		for word_list in data_list:
+			doc_data_list.append(word_list)
+
+		doc_end_idx = len(doc_data_list)
+
+		doc_sentence_idx_list.append((doc_beg_idx,doc_end_idx))
+		
+		label_list =[0] * num_classes
+		label_list[tag_idx] = 1
+
+		gold_label_list.append(label_list)
+	
+	data_word_index_mat = np.array(list(vocab_processor.transform(doc_data_list)))
+
+	test_doc_data = []
+
+	for doc_idx in range(len(gold_label_list)):
+		doc_beg_idx,doc_end_idx = doc_sentence_idx_list[doc_idx]
+		
+		doc_sent_cnt = doc_end_idx - doc_beg_idx
+
+		doc_sentence_mat = data_word_index_mat[doc_beg_idx:doc_end_idx]
+
+		#每个doc句子数不足则填充
+		if doc_sent_cnt < max_sentence_num:
+			null_list = [[0] * max_sentence_length] * (max_sentence_num - doc_sent_cnt)		
+			null_arr = np.array(null_list)
+			doc_sentence_mat = np.concatenate((doc_sentence_mat,null_arr),axis = 0)
+		
+		test_doc_data.append(doc_sentence_mat)
+		
+	test_x = np.array(test_doc_data)
+	test_y = np.array(gold_label_list)
+	
+	return test_x,test_y
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
