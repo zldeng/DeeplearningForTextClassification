@@ -83,7 +83,7 @@ class TextRNN(BaseModel):
 			self.embedded_words = tf.nn.embedding_lookup(self.Embedding,self.input_x)
 
 		#Bi-LSTM layer
-		'''
+		
 		lstm_fw_cell = rnn.BasicLSTMCell(self.hidden_size)
 		lstm_bw_cell = rnn.BasicLSTMCell(self.hidden_size)
 		
@@ -92,10 +92,11 @@ class TextRNN(BaseModel):
 			lstm_bw_cell = rnn.DropoutWrapper(lstm_bw_cell,output_keep_prob = self.dropout_keep_prob)
 
 		outputs,output_states = tf.nn.bidirectional_dynamic_rnn(lstm_fw_cell,lstm_bw_cell,self.embedded_words,dtype = tf.float32)
-		'''
+		
 		
 		
 		#BI-GRU layer
+		'''
 		gru_fw_cell = rnn.GRUCell(self.hidden_size)
 		gru_bw_cell = rnn.GRUCell(self.hidden_size)
 
@@ -104,7 +105,7 @@ class TextRNN(BaseModel):
 			gru_bw_cell = rnn.DropoutWrapper(gru_bw_cell,output_keep_prob = self.dropout_keep_prob)
 
 		outputs,output_states = tf.nn.bidirectional_dynamic_rnn(gru_fw_cell,gru_bw_cell,self.embedded_words,dtype = tf.float32)
-		
+		'''
 		#concat output
 		#each output in outputs is [batch sequence_length hidden_size]
 		
