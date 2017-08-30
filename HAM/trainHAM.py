@@ -29,7 +29,7 @@ tf.flags.DEFINE_float("decay_rate", 0.9, "Rate of decay for learning rate.") #0.
 tf.flags.DEFINE_string("ckpt_dir","text_hkm_checkpoint/","checkpoint location for the model")
 tf.flags.DEFINE_integer('num_checkpoints',10,'save checkpoints count')
 
-tf.flags.DEFINE_integer('max_sentence_num',30,'max sentence num in a doc')
+tf.flags.DEFINE_integer('max_sentence_num',50,'max sentence num in a doc')
 tf.flags.DEFINE_integer('max_sentence_length',30,'max word count in a sentence')
 tf.flags.DEFINE_integer("embedding_size",128,"embedding size")
 tf.flags.DEFINE_integer('hidden_size',128,'cell output size')
