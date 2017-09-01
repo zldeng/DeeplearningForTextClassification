@@ -42,8 +42,7 @@ tf.flags.DEFINE_float('validation_percentage',0.1,'validat data percentage in tr
 tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")
 
 tf.flags.DEFINE_float("l2_reg_lambda", 0.0001, "L2 regularization lambda (default: 0.0)")
-
-tf.flags.DEFINE_float('grad_clip',5.0,'grad_clip')
+f.flags.DEFINE_float('grad_clip',4.0,'grad_clip')
 
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
