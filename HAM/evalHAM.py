@@ -23,7 +23,7 @@ tf.flags.DEFINE_string('checkpoint_file','./runs_hn_bi_gru/1503976075/text_rnn_c
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 
-tf.flags.DEFINE_integer('batch_size','64','batch size')
+tf.flags.DEFINE_integer('batch_size','100','batch size')
 
 tf.flags.DEFINE_integer('max_sentence_num',30,' max sentence cnt in doc')
 tf.flags.DEFINE_integer('max_sentence_length',30,'max word cnt in a sentence')
