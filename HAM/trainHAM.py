@@ -43,7 +43,7 @@ tf.flags.DEFINE_float('validation_percentage',0.1,'validat data percentage in tr
 tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")
 
 tf.flags.DEFINE_float("l2_reg_lambda", 0.0001, "L2 regularization lambda (default: 0.0)")
-f.flags.DEFINE_float('grad_clip',4.0,'grad_clip')
+tf.flags.DEFINE_float('grad_clip',4.0,'grad_clip')
 
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
@@ -89,7 +89,6 @@ print 'Load train data done!'
 x_train,y_train = train_data[0],train_data[1]
 x_dev,y_dev = dev_data[0],dev_data[1]
 
-
 print 'train_data:',np.shape(x_train),np.shape(y_train)
 print 'dev_data:',np.shape(x_dev),np.shape(y_dev)
 
@@ -133,10 +132,15 @@ with tf.Graph().as_default():
 				ham.dropout_keep_prob : FLAGS.dropout_keep_prob
 			}
 
-			tmp,step,loss,accuracy = sess.run([ham.train_op,ham.global_step,ham.loss_val,ham.accuracy],feed_dict)
-
+			tmp,step,loss,accuracy,gold_cnt,pred_cnt,pred_min,pred_max = sess.run([ham.train_op,ham.global_step,ham.loss_val,ham.accuracy,ham.gold_cnt,ham.pred_cnt,ham.pred_min,ham.pred_max],feed_dict)
+			
+			print 'train_gold_cnt: ',gold_cnt
+			print 'train_min_max:',pred_min,pred_max
+			print 'train_cnt: ',pred_cnt
 			time_str = datetime.datetime.now().isoformat()
 			print "{}:step {}, loss {:g}, acc {:g}".format(time_str,step,loss,accuracy)
+			
+			sys.stdout.flush()
 
 
 		def dev_step(dev_x,dev_y):
@@ -147,10 +151,14 @@ with tf.Graph().as_default():
 				}
 			
 
-			step,loss,accuracy = sess.run([ham.global_step,ham.loss_val,ham.accuracy],feed_dict)
+			step,loss,accuracy,gold_cnt,pred_cnt = sess.run([ham.global_step,ham.loss_val,ham.accuracy,ham.gold_cnt,ham.pred_cnt],feed_dict)
 			
+			print 'dev_gold_cnt:',gold_cnt
+			print 'dev_cnt:',pred_cnt
+
 			time_str = datetime.datetime.now().isoformat()
 			print "dev_result: {}:step {}, loss {:g}, acc {:g}".format(time_str,step,loss,accuracy)
+			sys.stdout.flush()
 
 
 		for epoch_idx in range(FLAGS.num_epochs):

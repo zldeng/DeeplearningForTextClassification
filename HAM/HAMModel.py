@@ -63,18 +63,24 @@ class HAM(object):
 		if not is_training:
 			return
 				
-		self.word2vec()
-		self.sen2vec()
-		self.doc2vec()
+		word_embedded = self.word2vec()
+		sent_vec = self.sen2vec(word_embedded)
+		doc_vec = self.doc2vec(sent_vec)
 
-		self.logits = self.inference()
+		self.logits = self.inference(doc_vec)
 
-		self.loss_val = self.loss()
+		self.loss_val = self.loss(self.input_y,self.logits)
 
 		self.train_op = self.train()
 		
 		self.predictions = tf.argmax(self.logits,axis = 1,name = 'predictions')
-	
+		
+		self.pred_min = tf.reduce_min(self.predictions)
+		self.pred_max = tf.reduce_max(self.predictions)
+
+		self.pred_cnt = tf.bincount(tf.cast(self.predictions,dtype=tf.int32))
+		self.gold_cnt = tf.bincount(tf.cast(tf.argmax(self.input_y,axis = 1),dtype = tf.int32))
+
 		self.accuracy = self.accuracy(self.logits,self.input_y)
 		
 
@@ -83,7 +89,9 @@ class HAM(object):
 			self.embedding_mat = tf.Variable(tf.truncated_normal((self.vocab_size,self.embedding_size)),name = 'embedding_mat')
 
 			#[batch,sentence_in_doc,word_in_sentence,embedding_size]
-			self.word_embedded = tf.nn.embedding_lookup(self.embedding_mat,self.input_x)
+			word_embedded = tf.nn.embedding_lookup(self.embedding_mat,self.input_x)
+
+			return word_embedded
 
 
 	
@@ -95,6 +103,9 @@ class HAM(object):
 		with tf.variable_scope(name):
 			fw_gru_cell = rnn.GRUCell(self.hidden_size)
 			bw_gru_cell = rnn.GRUCell(self.hidden_size)
+
+			fw_gru_cell = rnn.DropoutWrapper(fw_gru_cell,output_keep_prob = self.dropout_keep_prob)
+			bw_gru_cell = rnn.DropoutWrapper(bw_gru_cell,output_keep_prob = self.dropout_keep_prob)
 
 			(fw_outputs,bw_outputs),(fw_outputs_sta,bw_outputs_sta) = tf.nn.bidirectional_dynamic_rnn(
 				cell_fw = fw_gru_cell,
@@ -118,10 +129,16 @@ class HAM(object):
 			#使用全连接层将GRU的进行编码，得到隐藏层表示
 			#[batch,max_time,hidden_size*2]
 			fc = layers.fully_connected(inputs,self.hidden_size * 2,activation_fn=tf.nn.tanh)
+			#print 'fc_shpe:',fc.shape
 			
+			multiply = tf.multiply(fc,context_weight)
+			#print 'multi:',multiply.shape
+			
+			reduce_sum = tf.reduce_sum(multiply,axis = 2,keep_dims = True)
+			#print 'sum_shape:', reduce_sum.shape
+
 			#[batch,max_time,1]
-			alpha = tf.nn.softmax(tf.reduce_sum(tf.multiply(fc,context_weight),\
-				axis = 2,keep_dims = True),dim = 1)
+			alpha = tf.nn.softmax(reduce_sum,axis = 2,keep_dims = True),dim = 1)
 			
 			#before reduce_sum: [batch,max_time,hidden_size*2]
 			#after reduce_sum: [batch,2*hidden_size]
@@ -129,34 +146,37 @@ class HAM(object):
 
 			return atten_output
 
-	def sen2vec(self):
+	def sen2vec(self,word_embedded):
 		with tf.name_scope('sen2vec'):
 			#[batch*max_sentence_num,max_sentence_length,embedding_size]
-			self.word_embedded = tf.reshape(self.word_embedded,\
+			word_embedded = tf.reshape(word_embedded,\
 				[-1,self.max_sentence_length,self.embedding_size])
 
 			#[bacth * max_sentence_num,max_sentence_length,2*hidden_size]
-			self.word_encoded = self.BidirectionalGRUEncoder(self.word_embedded,name = 'word_encoder')	
+			word_encoded = self.BidirectionalGRUEncoder(word_embedded,name = 'word_encoder')	
 			
 			#[batch*max_sentence_num,2*hidden_size]
-			self.sent_vec = self.AttentionLayer(self.word_encoded,name = 'word_attention')
+			sent_vec = self.AttentionLayer(word_encoded,name = 'word_attention')
 
-	def doc2vec(self):
+			return sent_vec
+
+	def doc2vec(self,sent_vec):
 		with tf.name_scope('doc2vec'):
 			#[batch,max_sentence_num,2*hidden_size]
-			self.sent_vec = tf.reshape(self.sent_vec,\
+			sent_vec = tf.reshape(sent_vec,\
 				[-1,self.max_sentence_num,self.hidden_size*2])
 
 			#[batch,max_sentence_num,2*hidden_size]
-			self.doc_encoded = self.BidirectionalGRUEncoder(self.sent_vec,'doc_encoder')
+			doc_encoded = self.BidirectionalGRUEncoder(sent_vec,'doc_encoder')
 
 			#[batch,2*hidden_size]
-			self.doc_vec = self.AttentionLayer(self.doc_encoded,name = 'doc_attention')
+			doc_vec = self.AttentionLayer(doc_encoded,name = 'doc_attention')
 
+			return doc_vec
 
-	def inference(self):
+	def inference(self,doc_vec):
 		with tf.name_scope('logits'):
-			fc_out = layers.fully_connected(self.doc_vec,self.num_classes)
+			fc_out = layers.fully_connected(doc_vec,self.num_classes)
 
 			return fc_out
 	
@@ -164,15 +184,15 @@ class HAM(object):
 		with tf.name_scope('accuracy'):
 			predict = tf.argmax(logits,axis = 1,name = 'predict')	
 			gold_label = tf.argmax(input_y,axis = 1,name = 'label')
-
+		
 			acc = tf.reduce_mean(tf.cast(tf.equal(predict,gold_label),tf.float32))
 
 			return acc
 		
-	def loss(self):
+	def loss(self,input_y,logits):
 		with tf.name_scope('loss'):
-			losses = tf.nn.softmax_cross_entropy_with_logits(labels = self.input_y,\
-				logits = self.logits)
+			losses = tf.nn.softmax_cross_entropy_with_logits(labels = input_y,\
+				logits = logits)
 
 			loss = tf.reduce_mean(losses)
 			
