@@ -49,11 +49,10 @@ tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device 
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 
 
-tf.flags.DEFINE_string("train_data","/home/dengzhilong/tensorflow/code/data/all_hn_train_0817.sk",
+tf.flags.DEFINE_string("train_data","/home/dengzhilong/tensorflow/code/data/train.sk",
 	"path of traning data.")
 
 tf.flags.DEFINE_string('tag2id_file','/home/dengzhilong/tensorflow/code/data/tag_level_1.data','label tag2id file')
-tf.flags.DEFINE_string('tag_level','1','label tag level')
 
 FLAGS=tf.flags.FLAGS
 FLAGS._parse_flags()
@@ -66,7 +65,7 @@ sys.stderr.write('begin train....\n')
 sys.stderr.write('begin load train data and create vocabulary...\n')
 
 vocab_processor,train_data,dev_data = loadSklearnDataAndSplitTrainTest(FLAGS.tag2id_file,
-	FLAGS.tag_level,FLAGS.train_data,FLAGS.validation_percentage,FLAGS.dev_sample_max_cnt)
+	FLAGS.train_data,FLAGS.validation_percentage,FLAGS.dev_sample_max_cnt)
 
 sys.stderr.write('load train data done\n')
 

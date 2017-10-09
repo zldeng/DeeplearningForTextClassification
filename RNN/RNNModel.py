@@ -127,13 +127,13 @@ class TextRNN(BaseModel):
 			#print self.logits
 			losses = tf.nn.softmax_cross_entropy_with_logits(labels = self.input_y,logits = self.logits)
 
-			loss = tf.reduce_mean(losses)
+			data_loss = tf.reduce_mean(losses)
 
 			l2_loss = tf.add_n([tf.nn.l2_loss(cand_v) for cand_v in tf.trainable_variables() if 'bias' not in cand_v.name]) * self.l2_lambda
 
-			loss += l2_loss
+			data_loss += l2_loss
 
-		return loss
+		return data_loss
 
 	def train(self):
 		learning_rate = tf.train.exponential_decay(self.learning_rate,self.global_step,

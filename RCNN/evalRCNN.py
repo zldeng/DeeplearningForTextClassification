@@ -13,13 +13,12 @@ import os
 sys.path.append('../BaseUtil/')
 
 from tensorflow.contrib import learn
-from FastTextModel import FastTextModel
 
 from DataUtil import loadSklearnDataForTensorFlow
 from DataUtil import batch_iter
 
-tf.flags.DEFINE_string('checkpoint_dir','./runs_hn_bi_gru/1503976075/text_rnn_checkpoint/','the selected model for evaluated')
-tf.flags.DEFINE_string('checkpoint_file','./runs_hn_bi_gru/1503976075/text_rnn_checkpoint/model-44','the selected model for evaluated')
+tf.flags.DEFINE_string('checkpoint_dir','./runs_rcnn/1506674281/text_rcnn_checkpoint/','the selected model for evaluated')
+tf.flags.DEFINE_string('checkpoint_file','./runs_rcnn/1506674281/text_rcnn_checkpoint/model-59','the selected model for evaluated')
 
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
@@ -27,9 +26,9 @@ tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on 
 tf.flags.DEFINE_integer('batch_size','64','batch size')
 
 
-tf.flags.DEFINE_string('tag2id_file','/home/dengzhilong/tensorflow/data/tag_level_1.data','label tag2id file')
+tf.flags.DEFINE_string('tag2id_file','/home/dengzhilong/code_from_my_git/data/tag_level_1.data','label tag2id file')
+tf.flags.DEFINE_string('sklearn_test_file','/home/dengzhilong/code_from_my_git/data/test.sk','sklearn format test file')
 
-tf.flags.DEFINE_string('sklearn_test_file','/home/dengzhilong/tensorflow/data/henan_1th_all_labeled_data_from_excel.available.test.sklearn','sklearn format test file')
 
 FLAGS=tf.flags.FLAGS
 FLAGS._parse_flags()
@@ -58,7 +57,7 @@ vocab_processor = learn.preprocessing.VocabularyProcessor.restore(vocab_path)
 
 print 'load vocab processort done'
 
-print len(x_raw),len(x_raw[0])
+#print len(x_raw),len(x_raw[0])
 
 x_test = np.array(list(vocab_processor.transform(x_raw)))
 
@@ -81,6 +80,7 @@ with graph.as_default():
 		saver.restore(sess,checkpoint_file)
 
 		input_x = graph.get_operation_by_name('input_x').outputs[0]
+		dropout_keep_prob = graph.get_operation_by_name('dropout_keep_prob').outputs[0]
 
 		predictions = graph.get_operation_by_name('predictions').outputs[0]
 
@@ -92,6 +92,7 @@ with graph.as_default():
 
 			all_predictions = np.concatenate((all_predictions,cand_predictions))
 
+print type(all_predictions)
 print y_test[0]
 print all_predictions[0]
 

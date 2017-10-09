@@ -22,6 +22,8 @@ class TextCNN(BaseModel):
 		self.input_x = tf.placeholder(tf.int32,[None,sequence_length],name = 'input_x')
 		self.input_y = tf.placeholder(tf.int32,[None,num_classes],name = 'input_y')
 		self.dropout_keep_prob = tf.placeholder(tf.float32,name = 'dropout_keep_prob')
+
+		self.batch_size = self.input_x.shape[0].value
 		
 		self.sequence_length = sequence_length
 		self.num_classes = num_classes
@@ -124,13 +126,13 @@ class TextCNN(BaseModel):
 			losses = tf.nn.softmax_cross_entropy_with_logits(labels = self.input_y,
 				logits = self.logits)
 
-			loss = tf.reduce_mean(losses)
+			data_loss = tf.reduce_mean(losses)
 
 			l2_loss = tf.add_n([tf.nn.l2_loss(cand_var) for cand_var in tf.trainable_variables() if 'b' not in cand_var.name])
 
-			self.loss = loss + l2_loss * self.l2_reg_lambda
+			data_loss = loss + l2_loss * self.l2_reg_lambda
 
-			return self.loss
+			return data_loss
 	
 
 	def train(self):

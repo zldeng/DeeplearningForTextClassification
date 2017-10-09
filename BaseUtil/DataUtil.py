@@ -26,21 +26,13 @@ def loadTag2Id(tag2id_file):
 	return tag2id
 
 
-def loadSklearnDataForTensorFlow(sklearn_file,tag_level,tag2id_file):
+def loadSklearnDataForTensorFlow(sklearn_file,tag2id_file):
 	'''
 		train and test must use the same tag2id_file
 	'''
 
 	tag2id = loadTag2Id(tag2id_file)
 
-	if '1' == tag_level:
-		tag_idx = 2
-	elif '2' == tag_level:
-		tag_idx = 3
-	else:
-		print 'tag_level_error[1/2]' + str(tag_level)
-		sys.exit(1)
-	
 	x_text = []
 	y_text = []
 
@@ -53,14 +45,14 @@ def loadSklearnDataForTensorFlow(sklearn_file,tag_level,tag2id_file):
 			if len(line_list) < 5:
 				continue
 
-			cand_tag = line_list[tag_idx]
+			cand_tag = line_list[2]
 
 			if cand_tag not in tag2id:
 				continue
 
 			cand_tag_idx = tag2id[cand_tag]
 
-			cand_x = ' '.join(line_list[4:])
+			cand_x = ' '.join(line_list[3:])
 			cand_y = [0] * tag_size
 			cand_y[cand_tag_idx] = 1
 
@@ -70,7 +62,7 @@ def loadSklearnDataForTensorFlow(sklearn_file,tag_level,tag2id_file):
 	return [x_text,np.array(y_text)]
 
 
-def loadSklearnDataAndSplitTrainTest(tag2id_file,tag_level,sklearn_data_file,dev_percentage,max_dev_sampe_cnt):
+def loadSklearnDataAndSplitTrainTest(tag2id_file,sklearn_data_file,dev_percentage,max_dev_sampe_cnt):
 	'''
 	load sklearn data and return tensorflow input data
 	sk_file: file_name case_id tag_1 tag2 word_1 word_2 ...
@@ -78,14 +70,10 @@ def loadSklearnDataAndSplitTrainTest(tag2id_file,tag_level,sklearn_data_file,dev
 		tag1 1
 		tag2 2
 		...
-	tag_level:
-		1 level_1_tag
-		2 level_2_tag
-	
 	return: vocab_processor,(x_train,y_train),(x_dev,y_dev)
 
 	'''
-	x_text,y = loadSklearnDataForTensorFlow(sklearn_data_file,tag_level,tag2id_file)
+	x_text,y = loadSklearnDataForTensorFlow(sklearn_data_file,tag2id_file)
 
 	max_document_length = max([len(x.split(' ')) for x in x_text])
 

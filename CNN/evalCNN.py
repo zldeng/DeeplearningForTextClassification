@@ -27,9 +27,8 @@ tf.flags.DEFINE_integer('batch_size','64','batch size')
 
 
 tf.flags.DEFINE_string('tag2id_file','../../data/tag_level_1.data','label tag2id file')
-tf.flags.DEFINE_string('tag_level','1','label tag level')
 
-tf.flags.DEFINE_string('sklearn_test_file','../../data/henan_1th_all_labeled_data_from_excel.available.test.sklearn','sklearn format test file')
+tf.flags.DEFINE_string('sklearn_test_file','../../data/test.sk','sklearn format test file')
 
 FLAGS=tf.flags.FLAGS
 FLAGS._parse_flags()
@@ -44,7 +43,7 @@ for attr,value in sorted(FLAGS.__flags.items()):
 tag2id_file = FLAGS.tag2id_file
 
 print 'load test data from sk_file'
-x_raw,y_test = loadSklearnDataForTensorFlow(FLAGS.sklearn_test_file,FLAGS.tag_level,tag2id_file)
+x_raw,y_test = loadSklearnDataForTensorFlow(FLAGS.sklearn_test_file,tag2id_file)
 
 y_test = np.argmax(y_test,axis = 1)
 
