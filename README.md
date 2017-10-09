@@ -18,3 +18,6 @@ CNN在NLP中的使用可参考[深度学习与自然语言处理之四：卷积�
 ## Fasttext
 基于Fasttext的文本分类方法对应的paper为[Bag of Tricks for Efficient Text Classification](https://arxiv.org/abs/1607.01759) 
 代码中仅仅实现了最简单的基于单词的词向量求平均，并未使用b-gram的词向量，所以文本分类效果低于facebook开源的的[facebook fasttext](https://github.com/facebookresearch/fastText)  
+
+## RCNN
+基于RCNN的文本分类方法对饮给的paper为[Recurrent Convolutional Neural Networks for Text Classification](https://www.aaai.org/ocs/index.php/AAAI/AAAI15/paper/view/9745/9552)
