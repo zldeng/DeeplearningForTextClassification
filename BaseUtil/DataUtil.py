@@ -117,3 +117,30 @@ def batch_iter(data, batch_size, shuffle=True):
 		start_index = batch_num * batch_size
 		end_index = min((batch_num + 1) * batch_size, data_size)
 		yield shuffled_data[start_index:end_index]
+
+
+
+def loadLabeledData(file_name):
+	'''
+	file format:id + '\t' + tag + '\t' + word_1 word_2	...
+	'''
+	labeled_data_x = []
+	labeled_data_y = []
+	labeled_data_id = []
+
+	for line in file(file_name):
+		line_list = line.strip().split('\t')
+		if 3 != len(line_list):
+			continue
+
+		case_id = line_list[0]
+		case_tag = line_list[1]
+		sentence = line_list[2]
+		
+		labeled_data_id.append(case_id)
+		labeled_data_x.append(sentence)
+		labeled_data_y.append(case_tag)
+
+	return labeled_data_id,labeled_data_x,labeled_data_y
+
+

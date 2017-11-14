@@ -130,7 +130,7 @@ class TextCNN(BaseModel):
 
 			l2_loss = tf.add_n([tf.nn.l2_loss(cand_var) for cand_var in tf.trainable_variables() if 'b' not in cand_var.name])
 
-			data_loss = loss + l2_loss * self.l2_reg_lambda
+			data_loss = data_loss + l2_loss * self.l2_reg_lambda
 
 			return data_loss
 	

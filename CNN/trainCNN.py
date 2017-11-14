@@ -13,9 +13,15 @@ sys.path.append('../BaseUtil')
 import tensorflow as tf
 import numpy as np
 import os,time,datetime
+import pickle
+from tensorflow.contrib import learn
 
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import LabelEncoder
+from sklearn import preprocessing
 from CNNModel import TextCNN
-from DataUtil import loadSklearnDataAndSplitTrainTest
+from DataUtil import loadLabeledData
 from DataUtil import batch_iter
 
 
@@ -39,8 +45,7 @@ tf.flags.DEFINE_integer("num_filters", 128, "Number of filters per filter size (
 tf.flags.DEFINE_boolean("is_training",True,"is traning.true:tranining,false:testing/inference")
 
 tf.flags.DEFINE_float('validation_percentage',0.1,'validat data percentage in train data')
-tf.flags.DEFINE_integer('dev_sample_max_cnt',1000,'max cnt of validation samples, dev samples cnt too large will case high loader')
-
+tf.flags.DEFINE_integer('max_sentence_length',30,'max words count in a sentence')
 tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")
 
 tf.flags.DEFINE_float("l2_reg_lambda", 0.0001, "L2 regularization lambda (default: 0.0)")
@@ -49,14 +54,18 @@ tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device 
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 
 
-tf.flags.DEFINE_string("train_data","/home/dengzhilong/tensorflow/code/data/train.sk",
+tf.flags.DEFINE_string("train_data","/home/dengzhilong/code_from_my_git/data/parser_engine/parser.model.train.tag2",
 	"path of traning data.")
 
-tf.flags.DEFINE_string('tag2id_file','/home/dengzhilong/tensorflow/code/data/tag_level_1.data','label tag2id file')
-
+tf.flags.DEFINE_string("label_encoder",'label_encoder','label encoder name')
 FLAGS=tf.flags.FLAGS
 FLAGS._parse_flags()
 
+timestamp = str(int(time.time()))
+out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs_hn_cnn", timestamp))
+
+if not os.path.exists(out_dir):
+	os.makedirs(out_dir)
 
 for attr,value in sorted(FLAGS.__flags.items()):
 	sys.stderr.write("{}={}".format(attr,value) + '\n')
@@ -64,13 +73,35 @@ for attr,value in sorted(FLAGS.__flags.items()):
 sys.stderr.write('begin train....\n')
 sys.stderr.write('begin load train data and create vocabulary...\n')
 
-vocab_processor,train_data,dev_data = loadSklearnDataAndSplitTrainTest(FLAGS.tag2id_file,
-	FLAGS.train_data,FLAGS.validation_percentage,FLAGS.dev_sample_max_cnt)
+labeled_data_id,labeled_data_X,labeled_data_y = loadLabeledData(FLAGS.train_data) 
 
-sys.stderr.write('load train data done\n')
+#encode label to int
+label_encoder = preprocessing.LabelEncoder()
+labeled_data_y = label_encoder.fit_transform(labeled_data_y)
 
-x_train,y_train = train_data[0],train_data[1]
-x_dev,y_dev = dev_data[0],dev_data[1]
+label_encoder_name = os.path.join(out_dir,FLAGS.label_encoder)
+#save label_encoder to file
+pickle.dump(label_encoder,file(label_encoder_name,'wb'),True)
+
+#convet label to int array
+label_cnt = len(label_encoder.classes_)
+sample_cnt = len(labeled_data_X)
+labeled_y = np.zeros([sample_cnt,label_cnt])
+for sample_idx,label_idx in enumerate(labeled_data_y):
+	labeled_y[sample_idx][label_idx] = 1
+
+max_sentence_len = min(FLAGS.max_sentence_length,max([len(s.split(' ')) for s in labeled_data_X]))
+vocab_processor = learn.preprocessing.VocabularyProcessor(max_sentence_len)
+
+labeled_data_X = np.array(list(vocab_processor.fit_transform(labeled_data_X)))
+
+x_train,x_dev,y_train,y_dev = train_test_split(labeled_data_X,labeled_y,test_size = FLAGS.validation_percentage)
+
+x_train = np.array(x_train)
+y_train = np.array(y_train)
+
+x_dev = np.array(x_dev)
+y_dev = np.array(y_dev)
 
 with tf.Graph().as_default():
 	sess_conf = tf.ConfigProto(
@@ -80,12 +111,6 @@ with tf.Graph().as_default():
 	sess = tf.Session(config = sess_conf)
 
 	with sess.as_default():
-		timestamp = str(int(time.time()))
-		out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs_hn_cnn", timestamp))
-
-		if not os.path.exists(out_dir):
-			os.makedirs(out_dir)
-
 		checkpoint_dir = os.path.abspath(os.path.join(out_dir,FLAGS.ckpt_dir))
 		if not os.path.exists(checkpoint_dir):
 			os.makedirs(checkpoint_dir)
