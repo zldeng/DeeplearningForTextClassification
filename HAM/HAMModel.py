@@ -138,7 +138,7 @@ class HAM(object):
 			#print 'sum_shape:', reduce_sum.shape
 
 			#[batch,max_time,1]
-			alpha = tf.nn.softmax(reduce_sum,axis = 2,keep_dims = True),dim = 1)
+			alpha = tf.nn.softmax(reduce_sum,dim = 1)
 			
 			#before reduce_sum: [batch,max_time,hidden_size*2]
 			#after reduce_sum: [batch,2*hidden_size]
